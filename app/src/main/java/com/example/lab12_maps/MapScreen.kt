@@ -1,38 +1,36 @@
 package com.example.lab12_maps
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.google.maps.android.compose.GoogleMap
+import android.Manifest
+import com.google.accompanist.permissions.*
 import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MapScreen() {
-    // 1. Estado para controlar el tipo de mapa actual
-    var mapType by remember { mutableStateOf(MapType.NORMAL) }
+    // 1. Manejo de permisos
+    val locationPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+
+    // Lanzar solicitud de permisos al cargar la pantalla
+    LaunchedEffect(Unit) {
+        locationPermissionState.launchMultiplePermissionRequest()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 2. GoogleMap configurado con las propiedades dinámicas
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
-            properties = MapProperties(mapType = mapType)
+            // 2. Activamos la capa de ubicación (punto azul) si tenemos permiso
+            properties = MapProperties(
+                isMyLocationEnabled = locationPermissionState.allPermissionsGranted
+            )
         )
-
-        // 3. UI de control para cambiar el estado
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(onClick = { mapType = MapType.NORMAL }) { Text("Normal") }
-            Button(onClick = { mapType = MapType.HYBRID }) { Text("Híbrido") }
-            Button(onClick = { mapType = MapType.TERRAIN }) { Text("Terreno") }
-        }
     }
 }
